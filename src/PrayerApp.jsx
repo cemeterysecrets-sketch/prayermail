@@ -54,6 +54,15 @@ export default function PrayerApp() {
   return (
     <div style={{ maxWidth: 520, margin: "0 auto", padding: 16 }}>
       <h1 style={{ textAlign: "center" }}>PrayerMail</h1>
+<p style={{
+  fontSize: "14px",
+  color: "#555",
+  textAlign: "center",
+  marginBottom: "16px"
+}}>
+  Please do not include full names or identifying details.
+  Use general phrases like <em>my aunt</em>, <em>a coworker</em>, or <em>a loved one</em>.
+</p>
 
       <div style={{ marginBottom: 20 }}>
         <input
