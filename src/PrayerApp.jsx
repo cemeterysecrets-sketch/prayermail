@@ -112,7 +112,10 @@ function containsFullName(text) {
           }}
         >
           <strong>{p.title}</strong>
-          <p>{p.text}</p>
+<p style={{ whiteSpace: "pre-wrap" }}>
+  {p.text}
+</p>
+
           <button onClick={() => prayFor(p.id)}>
             🙏 {p.prayedCount} I’ll Pray
           </button>
