@@ -125,10 +125,21 @@ function timeAgo(timestamp) {
             marginBottom: 12,
           }}
         >
-          <strong>{p.title}</strong>
+        <strong>{p.title}</strong>
+
+<p style={{
+  fontSize: "12px",
+  color: "#777",
+  marginTop: "4px",
+  marginBottom: "8px"
+}}>
+  {timeAgo(p.createdAt)}
+</p>
+
 <p style={{ whiteSpace: "pre-wrap" }}>
   {p.text}
 </p>
+
 
           <button onClick={() => prayFor(p.id)}>
             🙏 {p.prayedCount} I’ll Pray
