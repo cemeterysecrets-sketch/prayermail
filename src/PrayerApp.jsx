@@ -12,9 +12,9 @@ import {
 
 // 🔐 Your Firebase config (keep your real values here)
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
+  apiKey: "AIzaSyCh9PCMPbe0jjBdwSgQ-rcFynNcVZ9xcUo",
+  authDomain: "prayermail-9249a.firebaseapp.com",
+  projectId: "prayermail-9249a",
 };
 
 const app = initializeApp(firebaseConfig);
