@@ -32,18 +32,37 @@ export default function PrayerApp() {
     });
     return () => unsub();
   }, []);
+function containsFullName(text) {
+  // Matches two capitalized words in a row (e.g., Suzy Smith)
+  const fullNamePattern = /\b[A-Z][a-z]+ [A-Z][a-z]+\b/;
+
+  // Matches titles + names (Mr. Smith, Dr. Johnson)
+  const titledNamePattern = /\b(Mr|Mrs|Ms|Miss|Dr)\.?\s+[A-Z][a-z]+\b/;
+
+  return fullNamePattern.test(text) || titledNamePattern.test(text);
+}
 
   async function submitPrayer() {
-    if (!text.trim()) return;
-    await addDoc(collection(db, "prayers"), {
-      title: title || "Prayer Request",
-      text,
-      prayedCount: 0,
-      createdAt: Date.now(),
-    });
-    setTitle("");
-    setText("");
+  if (!text.trim()) return;
+
+  if (containsFullName(text)) {
+    alert(
+      "Please remove full names or identifying details. Use phrases like 'my aunt' or 'a loved one.'"
+    );
+    return;
   }
+
+  await addDoc(collection(db, "prayers"), {
+    title: title || "Prayer Request",
+    text,
+    prayedCount: 0,
+    createdAt: Date.now(),
+  });
+
+  setTitle("");
+  setText("");
+}
+
 
   async function prayFor(id) {
     await updateDoc(doc(db, "prayers", id), {
