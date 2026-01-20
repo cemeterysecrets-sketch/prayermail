@@ -84,71 +84,90 @@ function timeAgo(timestamp) {
   return `${days} day${days !== 1 ? "s" : ""} ago`;
 }
 
-  return (
-<div
-  key={p.id}
-  style={{
-    background: "#ffffff",
-    padding: "16px",
-    borderRadius: "12px",
-    marginBottom: "16px",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-  }}
->
+return (
+  <div
+    style={{
+      maxWidth: 520,
+      margin: "0 auto",
+      padding: "16px",
+      background: "#f8fafc",
+      minHeight: "100vh",
+    }}
+  >
+    <h1 style={{ textAlign: "center" }}>PrayerMail</h1>
 
-  Please do not include full names or identifying details.
-  Use general phrases like <em>my aunt</em>, <em>a coworker</em>, or <em>a loved one</em>.
-</p>
+    <p
+      style={{
+        fontSize: "14px",
+        color: "#555",
+        textAlign: "center",
+        marginBottom: "16px",
+      }}
+    >
+      Please do not include full names or identifying details.
+      Use general phrases like <em>my aunt</em>,{" "}
+      <em>a coworker</em>, or <em>a loved one</em>.
+    </p>
 
-      <div style={{ marginBottom: 20 }}>
-        <input
-          placeholder="Title (optional)"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={{ width: "100%", padding: 8, marginBottom: 8 }}
-        />
-        <textarea
-          placeholder="Share your prayer request…"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          style={{ width: "100%", padding: 8, marginBottom: 8 }}
-        />
-        <button onClick={submitPrayer} style={{ width: "100%", padding: 8 }}>
-          Submit Prayer
-        </button>
-      </div>
+    <div style={{ marginBottom: 20 }}>
+      <input
+        placeholder="Title (optional)"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        style={{ width: "100%", padding: 8, marginBottom: 8 }}
+      />
 
-      {prayers.map((p) => (
-        <div
-          key={p.id}
-          style={{
-            border: "1px solid #ddd",
-            padding: 12,
-            borderRadius: 6,
-            marginBottom: 12,
-          }}
-        >
+      <textarea
+        placeholder="Share your prayer request…"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        style={{ width: "100%", padding: 8, marginBottom: 8 }}
+      />
+
+      <button
+        onClick={submitPrayer}
+        style={{ width: "100%", padding: 10 }}
+      >
+        Submit Prayer
+      </button>
+    </div>
+
+    {prayers.map((p) => (
+      <div
+        key={p.id}
+        style={{
+          background: "#ffffff",
+          padding: "16px",
+          borderRadius: "12px",
+          marginBottom: "16px",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+        }}
+      >
         <strong>{p.title}</strong>
 
-<p style={{
-  fontSize: "12px",
-  color: "#777",
-  marginTop: "4px",
-  marginBottom: "8px"
-}}>
-  {timeAgo(p.createdAt)}
-</p>
+        <p
+          style={{
+            fontSize: "12px",
+            color: "#777",
+            marginTop: "4px",
+            marginBottom: "8px",
+          }}
+        >
+          {timeAgo(p.createdAt)}
+        </p>
 
-<p style={{ whiteSpace: "pre-wrap" }}>
-  {p.text}
-</p>
+        <p style={{ whiteSpace: "pre-wrap" }}>
+          {p.text}
+        </p>
 
-
-          <button onClick={() => prayFor(p.id)}>
-            🙏 {p.prayedCount} I’ll Pray
-          </button>
-        </div>
-      ))}
-    </div>
-  );
+        <button
+          onClick={() => prayFor(p.id)}
+          style={{ marginTop: "8px" }}
+        >
+          🙏 {p.prayedCount} I’ll Pray
+        </button>
+      </div>
+    ))}
+  </div>
+);
 }
