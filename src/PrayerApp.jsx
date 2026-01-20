@@ -94,7 +94,15 @@ return (
       minHeight: "100vh",
     }}
   >
-    <h1 style={{ textAlign: "center" }}>PrayerMail</h1>
+    <h1
+  style={{
+    textAlign: "center",
+    color: "#5f7d8c",
+    marginBottom: "8px",
+  }}
+>
+  PrayerMail
+</h1>
 
     <p
       style={{
