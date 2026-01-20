@@ -87,13 +87,7 @@ export default function PrayerApp() {
         minHeight: "100vh",
       }}
     >
-      <h1
-        style={{
-          textAlign: "center",
-          color: "#5f7d8c",
-          marginBottom: 8,
-        }}
-      >
+      <h1 style={{ textAlign: "center", color: "#5f7d8c", marginBottom: 8 }}>
         PrayerMail
       </h1>
 
@@ -154,14 +148,7 @@ export default function PrayerApp() {
         >
           <strong>{p.title}</strong>
 
-          <p
-            style={{
-              fontSize: 12,
-              color: "#777",
-              marginTop: 4,
-              marginBottom: 8,
-            }}
-          >
+          <p style={{ fontSize: 12, color: "#777", margin: "4px 0 8px" }}>
             {timeAgo(p.createdAt)}
           </p>
 
