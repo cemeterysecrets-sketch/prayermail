@@ -107,7 +107,7 @@ return (
     <p
       style={{
         fontSize: "14px",
-        color: "#555",
+        color: "#6b7280",
         textAlign: "center",
         marginBottom: "16px",
       }}
@@ -144,11 +144,20 @@ return (
       <div
         key={p.id}
         style={{
-          background: "#ffffff",
-          padding: "16px",
-          borderRadius: "12px",
-          marginBottom: "16px",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+         <button
+  onClick={submitPrayer}
+  style={{
+    width: "100%",
+    padding: 10,
+    background: "#5f7d8c",
+    color: "#ffffff",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+  }}
+>
+  Submit Prayer
+</button>
         }}
       >
         <strong>{p.title}</strong>
@@ -170,7 +179,21 @@ return (
 
         <button
           onClick={() => prayFor(p.id)}
-          style={{ marginTop: "8px" }}
+          style={{ <button
+  onClick={() => prayFor(p.id)}
+  style={{
+    marginTop: "8px",
+    background: "transparent",
+    color: "#5f7d8c",
+    border: "1px solid #d1d5db",
+    borderRadius: "999px",
+    padding: "6px 12px",
+    cursor: "pointer",
+  }}
+>
+  🙏 {p.prayedCount} I’ll Pray
+</button>
+ }}
         >
           🙏 {p.prayedCount} I’ll Pray
         </button>
