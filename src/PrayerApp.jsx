@@ -84,9 +84,9 @@ export default function PrayerApp() {
       createdAt: Date.now(),
     });
 
-    setPrivateLink(
-      window.location.origin + "/?answer=" + editToken
-    );
+   setPrivateLink(
+  window.location.origin + "/?answer=" + editToken
+);
 
     setTitle("");
     setTe
