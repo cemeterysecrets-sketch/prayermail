@@ -90,6 +90,32 @@ export default function PrayerApp() {
       <h1 style={{ textAlign: "center", color: "#5f7d8c", marginBottom: 8 }}>
         PrayerMail
       </h1>
+<p
+  style={{
+    textAlign: "center",
+    fontSize: 15,
+    color: "#4b5563",
+    fontFamily: "Georgia, 'Times New Roman', serif",
+    fontStyle: "italic",
+    lineHeight: 1.6,
+    maxWidth: 420,
+    margin: "0 auto 18px",
+  }}
+>
+  “Pray for one another so that you may be healed.”
+  <br />
+  <span
+    style={{
+      display: "block",
+      marginTop: 6,
+      fontSize: 13,
+      fontStyle: "normal",
+      color: "#6b7280",
+    }}
+  >
+    — James 5:16
+  </span>
+</p>
 
       <p
         style={{
