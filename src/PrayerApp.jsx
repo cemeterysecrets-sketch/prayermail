@@ -38,7 +38,7 @@ export default function PrayerApp() {
     return () => unsub();
   }, []);
 
-  // 🔹 Handle ?answer=TOKEN links (NO ROUTING)
+  // 🔹 Handle ?answer=TOKEN links (NO ROUTING, NO 404)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("answer");
@@ -84,9 +84,123 @@ export default function PrayerApp() {
       createdAt: Date.now(),
     });
 
-   setPrivateLink(
-  window.location.origin + "/?answer=" + editToken
-);
+    setPrivateLink(
+      window.location.origin + "/?answer=" + editToken
+    );
 
     setTitle("");
-    setTe
+    setText("");
+  }
+
+  async function prayFor(id) {
+    await updateDoc(doc(db, "prayers", id), {
+      prayedCount: increment(1),
+    });
+  }
+
+  function timeAgo(ts) {
+    const minutes = Math.floor((Date.now() - ts) / 60000);
+    if (minutes < 1) return "just now";
+    if (minutes < 60) return `${minutes} min ago`;
+    return `${Math.floor(minutes / 60)} hr ago`;
+  }
+
+  return (
+    <div
+      style={{
+        maxWidth: 520,
+        margin: "0 auto",
+        padding: 16,
+        background: "#f8fafc",
+        minHeight: "100vh",
+      }}
+    >
+      <h1 style={{ textAlign: "center", color: "#5f7d8c" }}>
+        PrayerMail
+      </h1>
+
+      <p
+        style={{
+          textAlign: "center",
+          fontFamily: "Georgia, serif",
+          fontStyle: "italic",
+          color: "#4b5563",
+          marginBottom: 16,
+        }}
+      >
+        “Pray for one another so that you may be healed.”
+        <br />
+        <small>— James 5:16</small>
+      </p>
+
+      <p
+        style={{
+          fontSize: 14,
+          color: "#6b7280",
+          textAlign: "center",
+          marginBottom: 16,
+        }}
+      >
+        Please do not include full names or identifying details. Use general
+        phrases like <em>my aunt</em>, <em>a coworker</em>, or{" "}
+        <em>a loved one</em>.
+      </p>
+
+      <input
+        placeholder="Title (optional)"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        style={{ width: "100%", padding: 8, marginBottom: 8 }}
+      />
+
+      <textarea
+        placeholder="Share your prayer request…"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        style={{ width: "100%", padding: 8, marginBottom: 8 }}
+      />
+
+      <button
+        onClick={submitPrayer}
+        style={{
+          width: "100%",
+          padding: 10,
+          background: "#5f7d8c",
+          color: "#ffffff",
+          border: "none",
+          borderRadius: 8,
+          cursor: "pointer",
+        }}
+      >
+        Submit Prayer
+      </button>
+
+      {privateLink && (
+        <div
+          style={{
+            marginTop: 16,
+            background: "#eef2f5",
+            padding: 12,
+            borderRadius: 8,
+            fontSize: 14,
+          }}
+        >
+          <strong>Private link (save this):</strong>
+          <p style={{ wordBreak: "break-all", margin: "6px 0" }}>
+            {privateLink}
+          </p>
+          <button
+            onClick={() => navigator.clipboard.writeText(privateLink)}
+          >
+            Copy Link
+          </button>
+        </div>
+      )}
+
+      <hr style={{ margin: "24px 0" }} />
+
+      {prayers.map((p) => (
+        <div
+          key={p.id}
+          style={{
+            background: "#ffffff"
