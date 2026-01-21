@@ -29,7 +29,6 @@ export default function PrayerApp() {
   const [text, setText] = useState("");
   const [privateLink, setPrivateLink] = useState("");
 
-  // 🔹 Load prayers live
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "prayers"), (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -38,7 +37,6 @@ export default function PrayerApp() {
     return () => unsub();
   }, []);
 
-  // 🔹 Handle ?answer=TOKEN links (NO ROUTING, NO 404)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("answer");
@@ -133,19 +131,6 @@ export default function PrayerApp() {
         <small>— James 5:16</small>
       </p>
 
-      <p
-        style={{
-          fontSize: 14,
-          color: "#6b7280",
-          textAlign: "center",
-          marginBottom: 16,
-        }}
-      >
-        Please do not include full names or identifying details. Use general
-        phrases like <em>my aunt</em>, <em>a coworker</em>, or{" "}
-        <em>a loved one</em>.
-      </p>
-
       <input
         placeholder="Title (optional)"
         value={title}
@@ -169,32 +154,15 @@ export default function PrayerApp() {
           color: "#ffffff",
           border: "none",
           borderRadius: 8,
-          cursor: "pointer",
         }}
       >
         Submit Prayer
       </button>
 
       {privateLink && (
-        <div
-          style={{
-            marginTop: 16,
-            background: "#eef2f5",
-            padding: 12,
-            borderRadius: 8,
-            fontSize: 14,
-          }}
-        >
-          <strong>Private link (save this):</strong>
-          <p style={{ wordBreak: "break-all", margin: "6px 0" }}>
-            {privateLink}
-          </p>
-          <button
-            onClick={() => navigator.clipboard.writeText(privateLink)}
-          >
-            Copy Link
-          </button>
-        </div>
+        <p style={{ marginTop: 12, wordBreak: "break-all" }}>
+          <strong>Private link:</strong> {privateLink}
+        </p>
       )}
 
       <hr style={{ margin: "24px 0" }} />
@@ -203,4 +171,24 @@ export default function PrayerApp() {
         <div
           key={p.id}
           style={{
-            background: "#ffffff"
+            background: "#ffffff",
+            padding: 16,
+            borderRadius: 12,
+            marginBottom: 16,
+          }}
+        >
+          <strong>{p.title}</strong>
+          <p>{p.text}</p>
+
+          {!p.answered && (
+            <button onClick={() => prayFor(p.id)}>
+              🙏 {p.prayedCount} I’ll Pray
+            </button>
+          )}
+
+          {p.answered && <p>✨ Prayer Answered</p>}
+        </div>
+      ))}
+    </div>
+  );
+}
