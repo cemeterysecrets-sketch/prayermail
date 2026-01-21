@@ -90,4 +90,3 @@ export default function PrayerApp() {
 
     setTitle("");
     setTe
-
