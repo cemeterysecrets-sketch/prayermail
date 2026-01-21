@@ -25,6 +25,7 @@ export default function PrayerApp() {
   const [prayers, setPrayers] = useState([]);
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
+const [privateLink, setPrivateLink] = useState("");
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "prayers"), (snap) => {
@@ -50,7 +51,7 @@ export default function PrayerApp() {
       return;
     }
 
-   const editToken = crypto.randomUUID();
+const editToken = crypto.randomUUID();
 
 await addDoc(collection(db, "prayers"), {
   title: title || "Prayer Request",
@@ -61,16 +62,13 @@ await addDoc(collection(db, "prayers"), {
   createdAt: Date.now(),
 });
 
-alert(
-  "Your prayer has been shared.\n\nSave this private link to mark it as answered later:\n\n" +
-    window.location.origin +
-    "/answer?token=" +
-    editToken
-);
+const link =
+  window.location.origin + "/answer?token=" + editToken;
 
+setPrivateLink(link);
 
-    setTitle("");
-    setText("");
+setTitle("");
+setText("");
   }
 
   async function prayFor(id) {
@@ -180,6 +178,45 @@ alert(
           Submit Prayer
         </button>
       </div>
+{privateLink && (
+  <div
+    style={{
+      background: "#eef2f5",
+      borderRadius: 8,
+      padding: 12,
+      marginTop: 12,
+      fontSize: 14,
+    }}
+  >
+    <strong>Private link (save this):</strong>
+    <p
+      style={{
+        wordBreak: "break-all",
+        margin: "6px 0",
+        fontFamily: "monospace",
+      }}
+    >
+      {privateLink}
+    </p>
+
+    <button
+      onClick={() => {
+        navigator.clipboard.writeText(privateLink);
+        alert("Link copied!");
+      }}
+      style={{
+        background: "#5f7d8c",
+        color: "#fff",
+        border: "none",
+        borderRadius: 6,
+        padding: "6px 10px",
+        cursor: "pointer",
+      }}
+    >
+      Copy Link
+    </button>
+  </div>
+)}
 
       {prayers.map((p) => (
         <div
