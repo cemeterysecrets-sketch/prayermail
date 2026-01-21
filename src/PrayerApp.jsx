@@ -50,12 +50,24 @@ export default function PrayerApp() {
       return;
     }
 
-    await addDoc(collection(db, "prayers"), {
-      title: title || "Prayer Request",
-      text,
-      prayedCount: 0,
-      createdAt: Date.now(),
-    });
+   const editToken = crypto.randomUUID();
+
+await addDoc(collection(db, "prayers"), {
+  title: title || "Prayer Request",
+  text,
+  prayedCount: 0,
+  answered: false,
+  editToken,
+  createdAt: Date.now(),
+});
+
+alert(
+  "Your prayer has been shared.\n\nSave this private link to mark it as answered later:\n\n" +
+    window.location.origin +
+    "/answer?token=" +
+    editToken
+);
+
 
     setTitle("");
     setText("");
