@@ -57,8 +57,8 @@ export default function PrayerApp() {
     });
 
     setPrivateLink(
-      window.location.origin + "/answer?token=" + editToken
-    );
+  window.location.origin + "/#/answer?token=" + editToken
+);
 
     setTitle("");
     setText("");
