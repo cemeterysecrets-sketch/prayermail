@@ -56,7 +56,7 @@ export default function PrayerApp() {
       createdAt: Date.now(),
     });
 
-    setPrivateLink(
+  setPrivateLink(
   window.location.origin + "/#/answer?token=" + editToken
 );
 
