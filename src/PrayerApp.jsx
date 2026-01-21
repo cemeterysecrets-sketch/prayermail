@@ -87,8 +87,8 @@ export default function PrayerApp() {
         minHeight: "100vh",
       }}
     >
-      <h1 style={{ textAlign: "center", color: "#5f7d8c", marginBottom: 8 }}>
-        PrayerMail
+    <h1 style={{ textAlign: "center", color: "red" }}>
+  THIS IS PRAYERAPP
       </h1>
 <p
   style={{
