@@ -14,7 +14,9 @@ import {
   getDocs,
 } from "firebase/firestore";
 
-/* 🔐 Firebase config */
+/* =======================
+   Firebase Configuration
+======================= */
 const firebaseConfig = {
   apiKey: "AIzaSyCh9PCMPbe0jjBdwSgQ-rcFynNcVZ9xcUo",
   authDomain: "prayermail-9249a.firebaseapp.com",
@@ -24,16 +26,30 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+/* =======================
+   UI Styles
+======================= */
+const pillBase = {
+  borderRadius: "999px",
+  padding: "6px 12px",
+  border: "1px solid #d1d5db",
+  background: "#f9fafb",
+  cursor: "pointer",
+  fontSize: "0.8rem",
+};
+
 export default function PrayerApp() {
   const [prayers, setPrayers] = useState([]);
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
-  const [editToken, setEditToken] = useState(null);
-  const [newPrayerId, setNewPrayerId] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
   const [editText, setEditText] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
 
-  /* 🔄 Live prayer feed */
+  /* =======================
+     Live Prayer Feed
+  ======================= */
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "prayers"), (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -42,18 +58,51 @@ export default function PrayerApp() {
     return () => unsub();
   }, []);
 
-  /* 🔑 Handle ?edit=TOKEN links */
+  /* =======================
+     Handle Edit Token Link
+  ======================= */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("edit");
-    if (token) setEditToken(token);
+    if (!token) return;
+
+    async function loadEditablePrayer() {
+      const q = query(
+        collection(db, "prayers"),
+        where("editToken", "==", token)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const p = snap.docs[0];
+        setEditingId(p.id);
+        setEditTitle(p.data().title);
+        setEditText(p.data().text);
+      }
+    }
+
+    loadEditablePrayer();
   }, []);
 
-  function containsFullName(t) {
-    return /\b[A-Z][a-z]+ [A-Z][a-z]+\b/.test(t);
+  /* =======================
+     Helpers
+  ======================= */
+  function containsFullName(text) {
+    return /\b[A-Z][a-z]+ [A-Z][a-z]+\b/.test(text);
   }
 
-  /* ➕ Submit prayer */
+  function timeAgo(ts) {
+    const sec = Math.floor((Date.now() - ts) / 1000);
+    if (sec < 60) return "just now";
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min} min ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr} hr ago`;
+    return `${Math.floor(hr / 24)} day(s) ago`;
+  }
+
+  /* =======================
+     Submit Prayer
+  ======================= */
   async function submitPrayer() {
     if (!text.trim()) return;
 
@@ -62,60 +111,74 @@ export default function PrayerApp() {
       return;
     }
 
-    const token = crypto.randomUUID();
+    const editToken = crypto.randomUUID();
 
-    const ref = await addDoc(collection(db, "prayers"), {
+    await addDoc(collection(db, "prayers"), {
       title: title || "Prayer Request",
       text,
       prayedCount: 0,
       answered: false,
-      editToken: token,
+      editToken,
       createdAt: Date.now(),
     });
 
-    setEditToken(token);
-    setNewPrayerId(ref.id);
     setTitle("");
     setText("");
+
+    alert(
+      `Save this private link to edit or mark answered:\n\n${window.location.origin}/?edit=${editToken}`
+    );
   }
 
-  /* 🙏 I'll Pray */
-  async function pray(id) {
+  /* =======================
+     Actions
+  ======================= */
+  async function prayFor(id) {
     await updateDoc(doc(db, "prayers", id), {
       prayedCount: increment(1),
     });
   }
 
-  /* ✏️ Save edit */
   async function saveEdit(id) {
-    await updateDoc(doc(db, "prayers", id), { text: editText });
+    await updateDoc(doc(db, "prayers", id), {
+      title: editTitle,
+      text: editText,
+    });
     setEditingId(null);
   }
 
-  /* 🙌 Mark answered */
   async function markAnswered(id) {
     await updateDoc(doc(db, "prayers", id), { answered: true });
+    setStatusMessage("🙏 Praise God — this prayer has been marked as answered.");
+    setTimeout(() => setStatusMessage(""), 4000);
   }
 
-  /* 🗑 Delete */
-  async function remove(id) {
+  async function deletePrayer(id) {
     if (!confirm("Delete this prayer?")) return;
     await deleteDoc(doc(db, "prayers", id));
   }
 
-  const button = {
-    padding: "4px 8px",
-    marginRight: 6,
-    borderRadius: 6,
-    border: "1px solid #ccc",
-    background: "#f8f8f8",
-    cursor: "pointer",
-    fontSize: 13,
-  };
-
+  /* =======================
+     Render
+  ======================= */
   return (
-    <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
+    <div style={{ maxWidth: 520, margin: "0 auto", padding: 16 }}>
       <h1 style={{ textAlign: "center" }}>PrayerMail</h1>
+
+      {statusMessage && (
+        <div
+          style={{
+            background: "#eef6f0",
+            color: "#256f4a",
+            padding: 10,
+            borderRadius: 8,
+            textAlign: "center",
+            marginBottom: 12,
+          }}
+        >
+          {statusMessage}
+        </div>
+      )}
 
       <input
         placeholder="Title (optional)"
@@ -128,7 +191,7 @@ export default function PrayerApp() {
         placeholder="Share your prayer request..."
         value={text}
         onChange={(e) => setText(e.target.value)}
-        style={{ width: "100%", height: 80 }}
+        style={{ width: "100%", marginBottom: 10 }}
       />
 
       <button
@@ -136,11 +199,11 @@ export default function PrayerApp() {
         style={{
           width: "100%",
           padding: 10,
-          marginTop: 6,
+          borderRadius: 8,
           background: "#607d8b",
-          color: "#fff",
+          color: "white",
           border: "none",
-          borderRadius: 6,
+          cursor: "pointer",
         }}
       >
         Submit Prayer
@@ -149,82 +212,93 @@ export default function PrayerApp() {
       <hr style={{ margin: "20px 0" }} />
 
       {prayers.map((p) => {
-        const isOwner = editToken && p.editToken === editToken;
-        const isNew = p.id === newPrayerId;
+        const isEditing = editingId === p.id;
 
         return (
-          <div
-            key={p.id}
-            style={{
-              padding: 12,
-              marginBottom: 12,
-              borderRadius: 8,
-              background: "#fff",
-              opacity: p.answered ? 0.6 : 1,
-            }}
-          >
-            <strong>{p.title}</strong>
-            <div style={{ fontSize: 12, color: "#777" }}>
-              {new Date(p.createdAt).toLocaleString()}
-            </div>
-
-            {editingId === p.id ? (
+          <div key={p.id} style={{ marginBottom: 24 }}>
+            {isEditing ? (
               <>
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  style={{ width: "100%", marginBottom: 6 }}
+                />
                 <textarea
                   value={editText}
                   onChange={(e) => setEditText(e.target.value)}
-                  style={{ width: "100%", marginTop: 6 }}
+                  style={{ width: "100%", marginBottom: 6 }}
                 />
-                <button style={button} onClick={() => saveEdit(p.id)}>
+                <button
+                  style={{ ...pillBase, background: "#e6f4ea" }}
+                  onClick={() => saveEdit(p.id)}
+                >
                   💾 Save
-                </button>
-                <button style={button} onClick={() => setEditingId(null)}>
-                  Cancel
                 </button>
               </>
             ) : (
-              <p>{p.text}</p>
-            )}
-
-            <button style={button} onClick={() => pray(p.id)}>
-              🙏 {p.prayedCount} I’ll Pray
-            </button>
-
-            {isOwner && (
               <>
-                {isNew && (
-                  <div style={{ marginTop: 6 }}>
-                    🔒 <strong>Private link:</strong>
-                    <button
-                      style={button}
-                      onClick={() =>
-                        navigator.clipboard.writeText(
-                          `${window.location.origin}?edit=${p.editToken}`
-                        )
-                      }
-                    >
-                      📋 Copy Edit Link
-                    </button>
+                <strong>{p.title}</strong>
+                <div style={{ fontSize: 12, color: "#777" }}>
+                  {timeAgo(p.createdAt)}
+                </div>
+
+                {p.answered && (
+                  <div
+                    style={{
+                      display: "inline-block",
+                      marginTop: 4,
+                      padding: "2px 8px",
+                      borderRadius: "999px",
+                      background: "#e6f4ea",
+                      color: "#256f4a",
+                      fontSize: "0.75rem",
+                    }}
+                  >
+                    🙏 Answered
                   </div>
                 )}
 
-                <button
-                  style={button}
-                  onClick={() => {
-                    setEditingId(p.id);
-                    setEditText(p.text);
-                  }}
-                >
-                  ✏️ Edit
-                </button>
+                <p>{p.text}</p>
 
-                <button style={button} onClick={() => markAnswered(p.id)}>
-                  🙌 Answered
-                </button>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button
+                    style={{ ...pillBase, background: "#eef6f8" }}
+                    onClick={() => prayFor(p.id)}
+                  >
+                    🙏 {p.prayedCount} I’ll Pray
+                  </button>
 
-                <button style={button} onClick={() => remove(p.id)}>
-                  🗑 Delete
-                </button>
+                  {p.editToken && (
+                    <>
+                      <button
+                        style={pillBase}
+                        onClick={() => {
+                          setEditingId(p.id);
+                          setEditTitle(p.title);
+                          setEditText(p.text);
+                        }}
+                      >
+                        ✏️ Edit
+                      </button>
+
+                      {!p.answered && (
+                        <button
+                          style={{ ...pillBase, background: "#fff7ed" }}
+                          onClick={() => markAnswered(p.id)}
+                        >
+                          🙌 Answered
+                        </button>
+                      )}
+
+                      <button
+                        style={{ ...pillBase, background: "#fee2e2" }}
+                        onClick={() => deletePrayer(p.id)}
+                      >
+                        🗑 Delete
+                      </button>
+                    </>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -233,5 +307,6 @@ export default function PrayerApp() {
     </div>
   );
 }
+
 
 
