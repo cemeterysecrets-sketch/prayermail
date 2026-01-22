@@ -31,11 +31,10 @@ export default function PrayerApp() {
 
   const audioRef = useRef(null);
 
-  // 🔊 Music control
+  // 🎵 Music
   useEffect(() => {
     if (!audioRef.current) return;
-    if (musicOn) audioRef.current.play();
-    else audioRef.current.pause();
+    musicOn ? audioRef.current.play() : audioRef.current.pause();
   }, [musicOn]);
 
   function toggleMusic() {
@@ -53,12 +52,10 @@ export default function PrayerApp() {
     return () => unsub();
   }, []);
 
-  // 🔍 Name filtering
   function containsFullName(text) {
     return /\b[A-Z][a-z]+ [A-Z][a-z]+\b/.test(text);
   }
 
-  // ➕ Submit prayer
   async function submitPrayer() {
     if (!text.trim()) return;
 
@@ -71,7 +68,7 @@ export default function PrayerApp() {
 
     const editToken = crypto.randomUUID();
 
-    const docRef = await addDoc(collection(db, "prayers"), {
+    const ref = await addDoc(collection(db, "prayers"), {
       title: title || "Prayer Request",
       text,
       prayedCount: 0,
@@ -80,48 +77,52 @@ export default function PrayerApp() {
       createdAt: Date.now(),
     });
 
-    localStorage.setItem(`owner-${docRef.id}`, editToken);
+    localStorage.setItem(`owner-${ref.id}`, editToken);
 
     setTitle("");
     setText("");
   }
 
-  // 🙏 Pray button
   async function prayFor(id) {
     await updateDoc(doc(db, "prayers", id), {
       prayedCount: increment(1),
     });
   }
 
-  // ✏️ Edit prayer
   async function editPrayer(p) {
-    const newText = prompt("Edit your prayer:", p.text);
-    if (!newText) return;
+    const updated = prompt("Edit your prayer:", p.text);
+    if (!updated) return;
 
     await updateDoc(doc(db, "prayers", p.id), {
-      text: newText,
+      text: updated,
     });
   }
 
-  // 🙌 Mark answered
   async function markAnswered(id) {
     await updateDoc(doc(db, "prayers", id), {
       answered: true,
     });
   }
 
-  // 🗑 TRUE delete
   async function deletePrayer(id) {
-    const confirmDelete = window.confirm(
+    const ok = window.confirm(
       "Are you sure you want to permanently delete this prayer?"
     );
-    if (!confirmDelete) return;
+    if (!ok) return;
 
     await deleteDoc(doc(db, "prayers", id));
+    localStorage.removeItem(`owner-${id}`);
   }
 
   function isOwner(p) {
     return localStorage.getItem(`owner-${p.id}`) === p.editToken;
+  }
+
+  function copyLink(p) {
+    const url =
+      window.location.origin + "/?answer=" + p.editToken;
+    navigator.clipboard.writeText(url);
+    alert("Private link copied. Save it somewhere safe.");
   }
 
   function timeAgo(ts) {
@@ -147,7 +148,9 @@ export default function PrayerApp() {
     >
       <audio ref={audioRef} src="/harp.mp3" loop />
 
-      <h1 style={{ textAlign: "center", color: "#5f7d78" }}>PrayerMail</h1>
+      <h1 style={{ textAlign: "center", color: "#5f7d78" }}>
+        PrayerMail
+      </h1>
 
       <div
         style={{
@@ -157,7 +160,8 @@ export default function PrayerApp() {
           marginBottom: 20,
         }}
       >
-        “Pray for one another, that you may be healed.”<br />
+        “Pray for one another, that you may be healed.”
+        <br />
         <span style={{ fontSize: 13 }}>— James 5:16</span>
       </div>
 
@@ -271,6 +275,20 @@ export default function PrayerApp() {
             {isOwner(p) && (
               <>
                 <button
+                  onClick={() => copyLink(p)}
+                  style={{
+                    padding: "6px 10px",
+                    borderRadius: 999,
+                    border: "1px solid #ddd",
+                    background: "#f4f7f6",
+                    marginRight: 6,
+                    cursor: "pointer",
+                  }}
+                >
+                  📋 Copy Link
+                </button>
+
+                <button
                   onClick={() => editPrayer(p)}
                   style={{
                     padding: "6px 10px",
@@ -321,5 +339,6 @@ export default function PrayerApp() {
     </div>
   );
 }
+
 
 
