@@ -411,6 +411,12 @@ export default function PrayerApp() {
             edit, mark a prayer as answered, or delete it later.
           </p>
 
+          <p>
+            If you notice a technical issue or something that doesn’t feel
+            appropriate for this space, you’re welcome to reach out quietly at{" "}
+            <strong>prayermail.help@gmail.com</strong>.
+          </p>
+
           <p style={{ fontStyle: "italic", marginTop: 16 }}>
             Founder’s note: PrayerMail was created quietly and intentionally,
             with the belief that prayer is sacred, personal, and often best
