@@ -32,7 +32,7 @@ export default function PrayerApp() {
 
   const audioRef = useRef(null);
 
-  // 🎵 Music
+  // 🎵 Background music
   useEffect(() => {
     if (!audioRef.current) return;
     musicOn ? audioRef.current.play() : audioRef.current.pause();
@@ -44,7 +44,7 @@ export default function PrayerApp() {
     localStorage.setItem("musicOn", next);
   }
 
-  // 🔄 Live prayers
+  // 🔄 Live prayer updates
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "prayers"), (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -93,16 +93,11 @@ export default function PrayerApp() {
   async function editPrayer(p) {
     const updated = prompt("Edit your prayer:", p.text);
     if (!updated) return;
-
-    await updateDoc(doc(db, "prayers", p.id), {
-      text: updated,
-    });
+    await updateDoc(doc(db, "prayers", p.id), { text: updated });
   }
 
   async function markAnswered(id) {
-    await updateDoc(doc(db, "prayers", id), {
-      answered: true,
-    });
+    await updateDoc(doc(db, "prayers", id), { answered: true });
   }
 
   async function deletePrayer(id) {
@@ -110,7 +105,6 @@ export default function PrayerApp() {
       "Are you sure you want to permanently delete this prayer?"
     );
     if (!ok) return;
-
     await deleteDoc(doc(db, "prayers", id));
     localStorage.removeItem(`owner-${id}`);
   }
@@ -353,7 +347,7 @@ export default function PrayerApp() {
         </div>
       ))}
 
-      {/* 🌿 Footer with About link */}
+      {/* 🌿 Footer */}
       <div
         style={{
           marginTop: 32,
@@ -420,8 +414,32 @@ export default function PrayerApp() {
           <p style={{ fontStyle: "italic", marginTop: 16 }}>
             Founder’s note: PrayerMail was created quietly and intentionally,
             with the belief that prayer is sacred, personal, and often best
-            offered without pressure or performance. This space is meant to feel
-            gentle, safe, and reverent.
+            offered without pressure or performance.
+          </p>
+
+          <p style={{ fontStyle: "italic" }}>
+            I’m a mom of three and an educator, and I felt led to create a place
+            for people who may not know many others who can pray for them — or
+            who may feel embarrassed, unsure, or hesitant to share their prayer
+            requests elsewhere.
+          </p>
+
+          <p style={{ fontStyle: "italic" }}>
+            My hope is that this space allows us to lift one another up, even if
+            only through prayer. Sometimes that quiet act of praying for someone
+            can mean more than we realize.
+          </p>
+
+          <p style={{ fontStyle: "italic" }}>
+            This is not a company or organization, but a small, personal project
+            offered freely and without ads, simply as a way to help people pray
+            for one another.
+          </p>
+
+          <p style={{ fontStyle: "italic", marginTop: 12 }}>
+            <strong>God Bless,</strong>
+            <br />
+            <strong>A Georgia mama who loves the Lord</strong>
           </p>
         </div>
       )}
