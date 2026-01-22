@@ -245,22 +245,37 @@ export default function PrayerApp() {
           Submit Prayer
         </button>
       )}
+{privateLinks.edit && (
+  <div
+    style={{
+      marginTop: 16,
+      background: "#eef2f5",
+      padding: 12,
+      borderRadius: 8,
+      fontSize: 14,
+    }}
+  >
+    <strong>Save these private links:</strong>
 
-      {privateLinks.id === editingId && (
-        <div style={{ marginTop: 16, background: "#eef2f5", padding: 10 }}>
-          <strong>Answered link:</strong>
-          <br />
-          <code style={{ wordBreak: "break-all" }}>
-            {privateLinks.answered}
-          </code>
-          <br />
-          <strong>Edit link:</strong>
-          <br />
-          <code style={{ wordBreak: "break-all" }}>
-            {privateLinks.edit}
-          </code>
-        </div>
-      )}
+    <div style={{ marginTop: 8 }}>
+      <div><strong>Edit or delete:</strong></div>
+      <code style={{ wordBreak: "break-all" }}>
+        {privateLinks.edit}
+      </code>
+    </div>
+
+    <div style={{ marginTop: 8 }}>
+      <div><strong>Mark as answered:</strong></div>
+      <code style={{ wordBreak: "break-all" }}>
+        {privateLinks.answered}
+      </code>
+    </div>
+
+    <p style={{ marginTop: 8, fontStyle: "italic", color: "#555" }}>
+      Anyone with these links can manage this prayer. Keep them private.
+    </p>
+  </div>
+)}
 
       <hr style={{ margin: "24px 0" }} />
 
