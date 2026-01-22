@@ -28,6 +28,7 @@ export default function PrayerApp() {
   const [musicOn, setMusicOn] = useState(
     localStorage.getItem("musicOn") === "true"
   );
+  const [showAbout, setShowAbout] = useState(false);
 
   const audioRef = useRef(null);
 
@@ -352,7 +353,7 @@ export default function PrayerApp() {
         </div>
       ))}
 
-      {/* 🌿 Footer */}
+      {/* 🌿 Footer with About link */}
       <div
         style={{
           marginTop: 32,
@@ -366,7 +367,58 @@ export default function PrayerApp() {
       >
         If this space has been helpful, you’re welcome to share it with someone
         who may need prayer.
+        <br />
+        <span
+          onClick={() => setShowAbout(!showAbout)}
+          style={{
+            cursor: "pointer",
+            textDecoration: "underline",
+            marginTop: 8,
+            display: "inline-block",
+          }}
+        >
+          About PrayerMail
+        </span>
       </div>
+
+      {showAbout && (
+        <div
+          style={{
+            marginTop: 20,
+            padding: 20,
+            background: "#ffffff",
+            borderRadius: 12,
+            boxShadow: "0 6px 16px rgba(0,0,0,0.04)",
+            fontSize: 14,
+            color: "#555",
+            lineHeight: 1.7,
+          }}
+        >
+          <p>
+            <strong>PrayerMail</strong> is a quiet, anonymous space created to
+            help people share prayer requests and pray for one another with care
+            and respect.
+          </p>
+
+          <p>
+            There are no accounts, no names required, and no public profiles.
+            Prayer requests are shared simply, so the focus can remain on prayer
+            itself.
+          </p>
+
+          <p>
+            Those who submit a prayer receive a private link that allows them to
+            edit, mark a prayer as answered, or delete it later.
+          </p>
+
+          <p style={{ fontStyle: "italic", marginTop: 16 }}>
+            Founder’s note: PrayerMail was created quietly and intentionally,
+            with the belief that prayer is sacred, personal, and often best
+            offered without pressure or performance. This space is meant to feel
+            gentle, safe, and reverent.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
