@@ -119,8 +119,7 @@ export default function PrayerApp() {
   }
 
   function copyLink(p) {
-    const url =
-      window.location.origin + "/?answer=" + p.editToken;
+    const url = window.location.origin + "/?answer=" + p.editToken;
     navigator.clipboard.writeText(url);
     alert("Private link copied. Save it somewhere safe.");
   }
@@ -157,7 +156,7 @@ export default function PrayerApp() {
           textAlign: "center",
           fontStyle: "italic",
           color: "#777",
-          marginBottom: 20,
+          marginBottom: 18,
         }}
       >
         “Pray for one another, that you may be healed.”
@@ -165,7 +164,24 @@ export default function PrayerApp() {
         <span style={{ fontSize: 13 }}>— James 5:16</span>
       </div>
 
-      <div style={{ textAlign: "center", marginBottom: 20 }}>
+      {/* 🌿 Gentle Directions */}
+      <div
+        style={{
+          textAlign: "center",
+          color: "#6b7280",
+          fontSize: 14,
+          lineHeight: 1.6,
+          marginBottom: 22,
+        }}
+      >
+        This is a quiet space to share prayer requests and to lift up the needs of
+        others.
+        <br />
+        You may submit a prayer anonymously, or pray for someone else by tapping
+        “I’ll Pray.”
+      </div>
+
+      <div style={{ textAlign: "center", marginBottom: 24 }}>
         <button
           onClick={toggleMusic}
           style={{
@@ -339,6 +355,5 @@ export default function PrayerApp() {
     </div>
   );
 }
-
 
 
