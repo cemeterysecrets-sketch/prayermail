@@ -7,13 +7,14 @@ import {
   onSnapshot,
   doc,
   updateDoc,
+  deleteDoc,
   increment,
   query,
   where,
   getDocs,
 } from "firebase/firestore";
 
-/* 🔐 Firebase config */
+// 🔐 Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCh9PCMPbe0jjBdwSgQ-rcFynNcVZ9xcUo",
   authDomain: "prayermail-9249a.firebaseapp.com",
@@ -27,13 +28,11 @@ export default function PrayerApp() {
   const [prayers, setPrayers] = useState([]);
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
-  const [privateLink, setPrivateLink] = useState("");
-
-  // 🔐 Edit-mode state (Step 1)
-  const [editPrayer, setEditPrayer] = useState(null);
   const [editToken, setEditToken] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [privateLinks, setPrivateLinks] = useState({});
 
-  /* 🔹 Live prayer feed */
+  // Load live prayers
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "prayers"), (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -42,46 +41,47 @@ export default function PrayerApp() {
     return () => unsub();
   }, []);
 
-  /* 🔹 Handle ?answer=TOKEN (mark answered) */
+  // Handle answered link
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("answer");
-    if (!token) return;
-
-    async function markAnswered() {
-      const q = query(
-        collection(db, "prayers"),
-        where("editToken", "==", token)
-      );
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        await updateDoc(snap.docs[0].ref, { answered: true });
-        alert("🙏 This prayer has been marked as answered.");
+    const ans = params.get("answer");
+    if (ans) {
+      async function markAnswered() {
+        const q = query(
+          collection(db, "prayers"),
+          where("editToken", "==", ans)
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          await updateDoc(snap.docs[0].ref, { answered: true });
+          alert("🙏 This prayer has been marked as answered.");
+        }
       }
+      markAnswered();
     }
-
-    markAnswered();
   }, []);
 
-  /* 🔹 Handle ?edit=TOKEN (Step 1: detect edit link) */
+  // Handle edit link
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("edit");
-    if (!token) return;
+    const editTokenParam = params.get("edit");
+    if (!editTokenParam) return;
 
-    async function loadEditablePrayer() {
+    async function loadForEdit() {
       const q = query(
         collection(db, "prayers"),
-        where("editToken", "==", token)
+        where("editToken", "==", editTokenParam)
       );
       const snap = await getDocs(q);
       if (!snap.empty) {
-        setEditPrayer({ id: snap.docs[0].id, ...snap.docs[0].data() });
-        setEditToken(token);
+        const prayer = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        setEditingId(prayer.id);
+        setTitle(prayer.title);
+        setText(prayer.text);
+        setEditToken(editTokenParam);
       }
     }
-
-    loadEditablePrayer();
+    loadForEdit();
   }, []);
 
   function containsFullName(text) {
@@ -100,7 +100,7 @@ export default function PrayerApp() {
 
     const token = crypto.randomUUID();
 
-    await addDoc(collection(db, "prayers"), {
+    const docRef = await addDoc(collection(db, "prayers"), {
       title: title || "Prayer Request",
       text,
       prayedCount: 0,
@@ -109,9 +109,35 @@ export default function PrayerApp() {
       createdAt: Date.now(),
     });
 
-    setPrivateLink(window.location.origin + "/?edit=" + token);
+    setPrivateLinks({
+      answered: window.location.origin + "/?answer=" + token,
+      edit: window.location.origin + "/?edit=" + token,
+      id: docRef.id,
+    });
+
     setTitle("");
     setText("");
+  }
+
+  async function saveEdits() {
+    if (!editingId) return;
+
+    await updateDoc(doc(db, "prayers", editingId), {
+      title,
+      text,
+    });
+
+    alert("✏️ Prayer updated!");
+    setEditingId(null);
+    setEditToken("");
+    setTitle("");
+    setText("");
+  }
+
+  async function deletePrayer(id) {
+    if (!window.confirm("Are you sure you want to delete this prayer?"))
+      return;
+    await deleteDoc(doc(db, "prayers", id));
   }
 
   async function prayFor(id) {
@@ -142,73 +168,101 @@ export default function PrayerApp() {
         fontFamily: "Georgia, serif",
       }}
     >
-      {/* 🔐 Edit link confirmation (Step 1C) */}
-      {editPrayer && (
-        <div
-          style={{
-            background: "#ecfdf5",
-            border: "1px solid #a7f3d0",
-            padding: 12,
-            borderRadius: 8,
-            marginBottom: 16,
-            fontSize: 14,
-          }}
-        >
-          🔐 You opened a private edit link for:
-          <strong> {editPrayer.title}</strong>
-        </div>
-      )}
-
       <h1 style={{ textAlign: "center", color: "#5f7d8c" }}>
         PrayerMail
       </h1>
 
-      <p style={{ textAlign: "center", fontStyle: "italic", color: "#4b5563" }}>
+      <p
+        style={{
+          textAlign: "center",
+          fontStyle: "italic",
+          color: "#4b5563",
+        }}
+      >
         “Pray for one another so that you may be healed.”
-        <br />— James 5:16
-      </p>
-
-      <p style={{ fontSize: 14, textAlign: "center", color: "#6b7280" }}>
-        Please do not include full names or identifying details.
+        <br />
+        — James 5:16
       </p>
 
       <input
         placeholder="Title (optional)"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        style={{ width: "100%", padding: 8, marginTop: 12 }}
+        style={{ width: "100%", padding: 8, marginBottom: 8 }}
       />
-
       <textarea
         placeholder="Share your prayer request…"
         value={text}
         onChange={(e) => setText(e.target.value)}
-        style={{ width: "100%", padding: 8, marginTop: 8 }}
+        style={{ width: "100%", padding: 8, marginBottom: 8 }}
       />
 
-      <button
-        onClick={submitPrayer}
-        style={{
-          width: "100%",
-          marginTop: 10,
-          padding: 10,
-          background: "#5f7d8c",
-          color: "#fff",
-          border: "none",
-          borderRadius: 8,
-          cursor: "pointer",
-        }}
-      >
-        Submit Prayer
-      </button>
+      {editingId ? (
+        <>
+          <button
+            onClick={saveEdits}
+            style={{
+              width: "100%",
+              padding: 10,
+              background: "#facc15",
+              color: "#000",
+              border: "none",
+              borderRadius: 8,
+              cursor: "pointer",
+            }}
+          >
+            Save Changes
+          </button>
+          <button
+            onClick={() => deletePrayer(editingId)}
+            style={{
+              width: "100%",
+              padding: 10,
+              background: "#ef4444",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              cursor: "pointer",
+              marginTop: 8,
+            }}
+          >
+            Delete Prayer
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={submitPrayer}
+          style={{
+            width: "100%",
+            padding: 10,
+            background: "#5f7d8c",
+            color: "#fff",
+            border: "none",
+            borderRadius: 8,
+            cursor: "pointer",
+          }}
+        >
+          Submit Prayer
+        </button>
+      )}
 
-      {privateLink && (
+      {privateLinks.id === editingId && (
         <div style={{ marginTop: 16, background: "#eef2f5", padding: 10 }}>
-          <strong>Private link (save this):</strong>
+          <strong>Answered link:</strong>
           <br />
-          <code style={{ wordBreak: "break-all" }}>{privateLink}</code>
+          <code style={{ wordBreak: "break-all" }}>
+            {privateLinks.answered}
+          </code>
+          <br />
+          <strong>Edit link:</strong>
+          <br />
+          <code style={{ wordBreak: "break-all" }}>
+            {privateLinks.edit}
+          </code>
         </div>
       )}
+
+      <hr style={{ margin: "24px 0" }} />
 
       {prayers.map((p) => (
         <div
@@ -218,7 +272,6 @@ export default function PrayerApp() {
             padding: 16,
             marginTop: 16,
             borderRadius: 12,
-            opacity: p.answered ? 0.6 : 1,
           }}
         >
           <strong>{p.title}</strong>
@@ -235,7 +288,7 @@ export default function PrayerApp() {
                 background: "transparent",
                 border: "1px solid #ccc",
                 borderRadius: 20,
-                padding: "6px 12px",
+                padding: 6,
                 cursor: "pointer",
               }}
             >
