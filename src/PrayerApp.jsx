@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { initializeApp } from "firebase/app";
 import {
   getFirestore,
@@ -21,16 +21,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* helpers */
-function ownsPrayer(prayerId, token) {
-  const stored = JSON.parse(localStorage.getItem("myPrayerTokens") || "{}");
-  return stored[prayerId] === token;
+/* 🔑 Ownership helpers */
+function getOwnership() {
+  return JSON.parse(localStorage.getItem("myPrayerTokens") || "{}");
 }
 
 function saveOwnership(prayerId, token) {
-  const stored = JSON.parse(localStorage.getItem("myPrayerTokens") || "{}");
-  stored[prayerId] = token;
-  localStorage.setItem("myPrayerTokens", JSON.stringify(stored));
+  const owned = getOwnership();
+  owned[prayerId] = token;
+  localStorage.setItem("myPrayerTokens", JSON.stringify(owned));
+}
+
+function ownsPrayer(prayerId, token) {
+  const owned = getOwnership();
+  return owned[prayerId] === token;
 }
 
 export default function PrayerApp() {
@@ -39,8 +43,25 @@ export default function PrayerApp() {
   const [text, setText] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
+  const [musicOn, setMusicOn] = useState(
+    localStorage.getItem("musicOn") === "true"
+  );
 
-  /* 🔄 Live load prayers */
+  const audioRef = useRef(null);
+
+  /* 🎶 Music control */
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (musicOn) {
+      audioRef.current.volume = 0.35;
+      audioRef.current.play().catch(() => {});
+    } else {
+      audioRef.current.pause();
+    }
+    localStorage.setItem("musicOn", musicOn);
+  }, [musicOn]);
+
+  /* 🔄 Live prayers */
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "prayers"), (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -49,7 +70,7 @@ export default function PrayerApp() {
     return () => unsub();
   }, []);
 
-  /* 📨 Handle ?edit=TOKEN links */
+  /* 🔗 Handle private edit link */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("edit");
@@ -62,12 +83,13 @@ export default function PrayerApp() {
     });
   }, [prayers]);
 
+  /* ➕ Submit prayer */
   async function submitPrayer() {
     if (!text.trim()) return;
 
     const editToken = crypto.randomUUID();
 
-    const docRef = await addDoc(collection(db, "prayers"), {
+    const ref = await addDoc(collection(db, "prayers"), {
       title: title || "Prayer Request",
       text,
       prayedCount: 0,
@@ -76,7 +98,7 @@ export default function PrayerApp() {
       createdAt: Date.now(),
     });
 
-    saveOwnership(docRef.id, editToken);
+    saveOwnership(ref.id, editToken);
 
     setTitle("");
     setText("");
@@ -88,14 +110,14 @@ export default function PrayerApp() {
     });
   }
 
-  async function markAnswered(id) {
-    await updateDoc(doc(db, "prayers", id), { answered: true });
-  }
-
   async function saveEdit(id) {
     await updateDoc(doc(db, "prayers", id), { text: editText });
     setEditingId(null);
     setEditText("");
+  }
+
+  async function markAnswered(id) {
+    await updateDoc(doc(db, "prayers", id), { answered: true });
   }
 
   async function removePrayer(id) {
@@ -103,45 +125,136 @@ export default function PrayerApp() {
     await deleteDoc(doc(db, "prayers", id));
   }
 
-  function copyEditLink(token) {
-    const link = `${window.location.origin}/?edit=${token}`;
-    navigator.clipboard.writeText(link);
-    alert("Private edit link copied");
+  function copyLink(token) {
+    navigator.clipboard.writeText(
+      `${window.location.origin}/?edit=${token}`
+    );
+  }
+
+  function timeAgo(ts) {
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 60) return "just now";
+    if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+    if (s < 86400) return `${Math.floor(s / 3600)} hr ago`;
+    return `${Math.floor(s / 86400)} days ago`;
   }
 
   return (
-    <div style={{ maxWidth: 600, margin: "auto", padding: 20 }}>
-      <h1 style={{ textAlign: "center" }}>PrayerMail</h1>
+    <div
+      style={{
+        maxWidth: 640,
+        margin: "40px auto",
+        padding: 32,
+        background: "#fafaf8",
+        borderRadius: 16,
+        boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
+        fontFamily: "Georgia, serif",
+      }}
+    >
+      {/* 🎵 Harp Audio */}
+      <audio ref={audioRef} src="/harp.mp3" loop />
 
+      {/* Header */}
+      <div style={{ textAlign: "center", marginBottom: 10 }}>
+        <h1
+          style={{
+            color: "#5f7d78",
+            fontWeight: "normal",
+            marginBottom: 4,
+          }}
+        >
+          PrayerMail
+        </h1>
+
+        <div
+          style={{
+            fontStyle: "italic",
+            color: "#7a7a7a",
+            marginBottom: 8,
+          }}
+        >
+          “Pray for one another, that you may be healed.”<br />
+          <span style={{ fontSize: 13 }}>— James 5:16</span>
+        </div>
+
+        <button
+          onClick={() => setMusicOn(!musicOn)}
+          style={{
+            fontSize: 13,
+            padding: "4px 10px",
+            borderRadius: 999,
+            border: "1px solid #ddd",
+            background: "#f4f7f6",
+            cursor: "pointer",
+          }}
+        >
+          🎵 Gentle music: {musicOn ? "On" : "Off"}
+        </button>
+      </div>
+
+      {/* Form */}
       <input
         placeholder="Title (optional)"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        style={{ width: "100%", marginBottom: 8 }}
+        style={{
+          width: "100%",
+          padding: 10,
+          borderRadius: 8,
+          border: "1px solid #ccc",
+          marginBottom: 10,
+        }}
       />
 
       <textarea
-        placeholder="Share your prayer request..."
+        placeholder="Share your prayer request…"
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={4}
-        style={{ width: "100%", marginBottom: 10 }}
+        style={{
+          width: "100%",
+          padding: 10,
+          borderRadius: 8,
+          border: "1px solid #ccc",
+          marginBottom: 14,
+        }}
       />
 
-      <button style={{ width: "100%" }} onClick={submitPrayer}>
+      <button
+        onClick={submitPrayer}
+        style={{
+          width: "100%",
+          padding: 12,
+          borderRadius: 10,
+          background: "#6b8f8a",
+          color: "white",
+          border: "none",
+          fontSize: 16,
+          cursor: "pointer",
+          marginBottom: 30,
+        }}
+      >
         Submit Prayer
       </button>
 
-      <hr />
-
+      {/* Prayers */}
       {prayers.map((p) => {
         const isOwner = ownsPrayer(p.id, p.editToken);
 
         return (
-          <div key={p.id} style={{ marginBottom: 20 }}>
+          <div
+            key={p.id}
+            style={{
+              background: "white",
+              borderRadius: 14,
+              padding: 18,
+              marginBottom: 20,
+              boxShadow: "0 6px 16px rgba(0,0,0,0.04)",
+            }}
+          >
             <strong>{p.title}</strong>
-            <div style={{ fontSize: 12, color: "#666" }}>
-              {new Date(p.createdAt).toLocaleString()}
+            <div style={{ fontSize: 13, color: "#888" }}>
+              {timeAgo(p.createdAt)}
             </div>
 
             {editingId === p.id ? (
@@ -150,56 +263,119 @@ export default function PrayerApp() {
                   value={editText}
                   onChange={(e) => setEditText(e.target.value)}
                   rows={3}
-                  style={{ width: "100%" }}
+                  style={{ width: "100%", marginTop: 8 }}
                 />
                 <button onClick={() => saveEdit(p.id)}>Save</button>
               </>
             ) : (
-              <p>{p.text}</p>
+              <div style={{ margin: "10px 0" }}>{p.text}</div>
             )}
 
-            {p.answered && <div>🙏 Answered</div>}
+            {p.answered && (
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: "4px 10px",
+                  borderRadius: 999,
+                  background: "#e7f2ee",
+                  color: "#3f6f64",
+                  fontSize: 13,
+                  marginBottom: 8,
+                }}
+              >
+                🙏 Prayer Answered
+              </div>
+            )}
 
-            <button onClick={() => pray(p.id)}>
-              🙏 {p.prayedCount} I’ll Pray
-            </button>
+            <div>
+              <button
+                onClick={() => pray(p.id)}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 999,
+                  border: "1px solid #ddd",
+                  background: "#f4f7f6",
+                  marginRight: 6,
+                  cursor: "pointer",
+                  fontSize: 13,
+                }}
+              >
+                🙏 {p.prayedCount} I’ll Pray
+              </button>
 
-            {isOwner && (
-              <>
-                <div style={{ fontSize: 12, marginTop: 6 }}>
-                  🔒 Private
+              {isOwner && (
+                <>
                   <button
-                    style={{ marginLeft: 6 }}
-                    onClick={() => copyEditLink(p.editToken)}
+                    onClick={() => {
+                      setEditingId(p.id);
+                      setEditText(p.text);
+                    }}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 999,
+                      border: "1px solid #ddd",
+                      background: "#f4f7f6",
+                      marginRight: 6,
+                      cursor: "pointer",
+                      fontSize: 13,
+                    }}
                   >
-                    Copy Edit Link
-                  </button>
-                </div>
-
-                <div style={{ marginTop: 6 }}>
-                  <button onClick={() => {
-                    setEditingId(p.id);
-                    setEditText(p.text);
-                  }}>
                     ✏️ Edit
                   </button>
 
                   {!p.answered && (
-                    <button onClick={() => markAnswered(p.id)}>
+                    <button
+                      onClick={() => markAnswered(p.id)}
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: 999,
+                        border: "1px solid #ddd",
+                        background: "#f4f7f6",
+                        marginRight: 6,
+                        cursor: "pointer",
+                        fontSize: 13,
+                      }}
+                    >
                       🙌 Answered
                     </button>
                   )}
 
-                  <button onClick={() => removePrayer(p.id)}>
+                  <button
+                    onClick={() => copyLink(p.editToken)}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 999,
+                      border: "1px solid #ddd",
+                      background: "#f4f7f6",
+                      marginRight: 6,
+                      cursor: "pointer",
+                      fontSize: 13,
+                    }}
+                  >
+                    📋 Copy Link
+                  </button>
+
+                  <button
+                    onClick={() => removePrayer(p.id)}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 999,
+                      border: "1px solid #f0c2c2",
+                      background: "#fdeaea",
+                      cursor: "pointer",
+                      fontSize: 13,
+                    }}
+                  >
                     🗑 Delete
                   </button>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
         );
       })}
     </div>
   );
 }
+
 
