@@ -72,12 +72,6 @@ export default function PrayerApp() {
     setTitle("");
     setText("");
 
-    alert(
-      "Prayer submitted.\n\nSave this private edit link:\n\n" +
-        window.location.origin +
-        "/?edit=" +
-        editToken
-    );
   }
 
   async function prayFor(id) {
