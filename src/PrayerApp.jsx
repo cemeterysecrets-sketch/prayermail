@@ -164,7 +164,6 @@ export default function PrayerApp() {
         <span style={{ fontSize: 13 }}>— James 5:16</span>
       </div>
 
-      {/* 🌿 Gentle Directions */}
       <div
         style={{
           textAlign: "center",
@@ -352,6 +351,22 @@ export default function PrayerApp() {
           </div>
         </div>
       ))}
+
+      {/* 🌿 Footer */}
+      <div
+        style={{
+          marginTop: 32,
+          paddingTop: 16,
+          borderTop: "1px solid #e5e7eb",
+          textAlign: "center",
+          fontSize: 13,
+          color: "#9ca3af",
+          lineHeight: 1.6,
+        }}
+      >
+        If this space has been helpful, you’re welcome to share it with someone
+        who may need prayer.
+      </div>
     </div>
   );
 }
