@@ -29,6 +29,10 @@ export default function PrayerApp() {
   const [text, setText] = useState("");
   const [privateLink, setPrivateLink] = useState("");
 
+  // 🔐 Edit-mode state (Step 1)
+  const [editPrayer, setEditPrayer] = useState(null);
+  const [editToken, setEditToken] = useState("");
+
   /* 🔹 Live prayer feed */
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "prayers"), (snap) => {
@@ -38,7 +42,7 @@ export default function PrayerApp() {
     return () => unsub();
   }, []);
 
-  /* 🔹 Handle ?answer=TOKEN links */
+  /* 🔹 Handle ?answer=TOKEN (mark answered) */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("answer");
@@ -59,6 +63,27 @@ export default function PrayerApp() {
     markAnswered();
   }, []);
 
+  /* 🔹 Handle ?edit=TOKEN (Step 1: detect edit link) */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("edit");
+    if (!token) return;
+
+    async function loadEditablePrayer() {
+      const q = query(
+        collection(db, "prayers"),
+        where("editToken", "==", token)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        setEditPrayer({ id: snap.docs[0].id, ...snap.docs[0].data() });
+        setEditToken(token);
+      }
+    }
+
+    loadEditablePrayer();
+  }, []);
+
   function containsFullName(text) {
     return /\b[A-Z][a-z]+ [A-Z][a-z]+\b/.test(text);
   }
@@ -73,21 +98,18 @@ export default function PrayerApp() {
       return;
     }
 
-    const editToken = crypto.randomUUID();
+    const token = crypto.randomUUID();
 
     await addDoc(collection(db, "prayers"), {
       title: title || "Prayer Request",
       text,
       prayedCount: 0,
       answered: false,
-      editToken,
+      editToken: token,
       createdAt: Date.now(),
     });
 
-    setPrivateLink(
-      window.location.origin + "/?answer=" + editToken
-    );
-
+    setPrivateLink(window.location.origin + "/?edit=" + token);
     setTitle("");
     setText("");
   }
@@ -120,6 +142,23 @@ export default function PrayerApp() {
         fontFamily: "Georgia, serif",
       }}
     >
+      {/* 🔐 Edit link confirmation (Step 1C) */}
+      {editPrayer && (
+        <div
+          style={{
+            background: "#ecfdf5",
+            border: "1px solid #a7f3d0",
+            padding: 12,
+            borderRadius: 8,
+            marginBottom: 16,
+            fontSize: 14,
+          }}
+        >
+          🔐 You opened a private edit link for:
+          <strong> {editPrayer.title}</strong>
+        </div>
+      )}
+
       <h1 style={{ textAlign: "center", color: "#5f7d8c" }}>
         PrayerMail
       </h1>
